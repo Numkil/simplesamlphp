@@ -62,7 +62,6 @@ $maxes[] = $dataset->getMax();
 
 if (isset($preferRule2)) {
 	$statrule = $ruleset->getRule($preferRule2);
-#	$rule2 = $statrule->getRuleID();
 	$dataset2 = $statrule->getDataset($preferTimeRes, $preferTime);
 	$dataset2->aggregateSummary();
 	$dataset2->calculateMax();
@@ -97,7 +96,7 @@ if (array_key_exists('output', $_REQUEST) && $_REQUEST['output'] === 'csv') {
 
 
 
-$t = new SimpleSAML_XHTML_Template($config, 'statistics:statistics-tpl.php');
+$t = new SimpleSAML_XHTML_Template($config, 'statistics:statistics.tpl.php');
 $t->data['pageid'] = 'statistics';
 $t->data['header'] = 'stat';
 $t->data['imgurl'] = $grapher->show($axis['axis'], $axis['axispos'], $datasets, $maxes);

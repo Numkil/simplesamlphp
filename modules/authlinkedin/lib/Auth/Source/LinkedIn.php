@@ -6,7 +6,7 @@ require_once(dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/oauth/lib
  * Authenticate using LinkedIn.
  *
  * @author Brook Schofield, TERENA.
- * @package simpleSAMLphp
+ * @package SimpleSAMLphp
  */
 class sspmod_authlinkedin_Auth_Source_LinkedIn extends SimpleSAML_Auth_Source {
 
@@ -22,6 +22,7 @@ class sspmod_authlinkedin_Auth_Source_LinkedIn extends SimpleSAML_Auth_Source {
 
 	private $key;
 	private $secret;
+	private $attributes;
 
 
 	/**
@@ -34,7 +35,7 @@ class sspmod_authlinkedin_Auth_Source_LinkedIn extends SimpleSAML_Auth_Source {
 		assert('is_array($info)');
 		assert('is_array($config)');
 
-		/* Call the parent constructor first, as required by the interface. */
+		// Call the parent constructor first, as required by the interface
 		parent::__construct($info, $config);
 
 		if (!array_key_exists('key', $config))
@@ -46,6 +47,13 @@ class sspmod_authlinkedin_Auth_Source_LinkedIn extends SimpleSAML_Auth_Source {
 			throw new Exception('LinkedIn authentication source is not properly configured: missing [secret]');
 
 		$this->secret = $config['secret'];
+
+		if (array_key_exists('attributes', $config)) {
+			$this->attributes = $config['attributes'];
+		} else {
+			// Default values if the attributes are not set in config (ref https://developer.linkedin.com/docs/fields)
+			$this->attributes = 'id,first-name,last-name,headline,summary,specialties,picture-url,email-address';
+		}
 	}
 
 
@@ -58,18 +66,18 @@ class sspmod_authlinkedin_Auth_Source_LinkedIn extends SimpleSAML_Auth_Source {
 	public function authenticate(&$state) {
 		assert('is_array($state)');
 
-		/* We are going to need the authId in order to retrieve this authentication source later. */
+		// We are going to need the authId in order to retrieve this authentication source later
 		$state[self::AUTHID] = $this->authId;
 
 		$stateID = SimpleSAML_Auth_State::getStateId($state);
-		SimpleSAML_Logger::debug('authlinkedin auth state id = ' . $stateID);
+		SimpleSAML\Logger::debug('authlinkedin auth state id = ' . $stateID);
 
 		$consumer = new sspmod_oauth_Consumer($this->key, $this->secret);
 
 		// Get the request token
-		$requestToken = $consumer->getRequestToken('https://api.linkedin.com/uas/oauth/requestToken', array('oauth_callback' => SimpleSAML_Module::getModuleUrl('authlinkedin') . '/linkback.php?stateid=' . $stateID));
+		$requestToken = $consumer->getRequestToken('https://api.linkedin.com/uas/oauth/requestToken', array('oauth_callback' => SimpleSAML\Module::getModuleUrl('authlinkedin') . '/linkback.php?stateid=' . $stateID));
 
-		SimpleSAML_Logger::debug("Got a request token from the OAuth service provider [" .
+		SimpleSAML\Logger::debug("Got a request token from the OAuth service provider [" .
 			$requestToken->key . "] with the secret [" . $requestToken->secret . "]");
 
 		$state['authlinkedin:requestToken'] = $requestToken;
@@ -87,18 +95,17 @@ class sspmod_authlinkedin_Auth_Source_LinkedIn extends SimpleSAML_Auth_Source {
 
 		$consumer = new sspmod_oauth_Consumer($this->key, $this->secret);
 
-		SimpleSAML_Logger::debug("oauth: Using this request token [" .
+		SimpleSAML\Logger::debug("oauth: Using this request token [" .
 			$requestToken->key . "] with the secret [" . $requestToken->secret . "]");
 
 		// Replace the request token with an access token (via GET method)
 		$accessToken = $consumer->getAccessToken('https://api.linkedin.com/uas/oauth/accessToken', $requestToken,
 			array('oauth_verifier' => $state['authlinkedin:oauth_verifier']));
 
-		SimpleSAML_Logger::debug("Got an access token from the OAuth service provider [" .
+		SimpleSAML\Logger::debug("Got an access token from the OAuth service provider [" .
 			$accessToken->key . "] with the secret [" . $accessToken->secret . "]");
 
-		// TODO: configure attributes (http://developer.linkedin.com/docs/DOC-1061) from config? Limited options via LinkedIn.
-		$userdata = $consumer->getUserInfo('https://api.linkedin.com/v1/people/~:(id,first-name,last-name,headline,summary,specialties,picture-url)', $accessToken, array('http' => array('header' => 'x-li-format: json')));
+		$userdata = $consumer->getUserInfo('https://api.linkedin.com/v1/people/~:(' . $this->attributes . ')', $accessToken, array('http' => array('header' => 'x-li-format: json')));
 
 		$attributes = array();
 		foreach($userdata AS $key => $value) {
@@ -114,7 +121,7 @@ class sspmod_authlinkedin_Auth_Source_LinkedIn extends SimpleSAML_Auth_Source {
 			$attributes['linkedin_user'] = array($userdata['id'] . '@linkedin.com');
 		}
 
-		SimpleSAML_Logger::debug('LinkedIn Returned Attributes: '. implode(", ",array_keys($attributes)));
+		SimpleSAML\Logger::debug('LinkedIn Returned Attributes: '. implode(", ",array_keys($attributes)));
 
 		$state['Attributes'] = $attributes;
 	}

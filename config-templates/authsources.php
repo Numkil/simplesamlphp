@@ -32,7 +32,7 @@ $config = array(
          * WARNING: SHA-1 is disallowed starting January the 1st, 2014.
          *
          * Uncomment the following option to start using SHA-256 for your signatures.
-         * Currently, simpleSAMLphp defaults to SHA-1, which has been deprecated since
+         * Currently, SimpleSAMLphp defaults to SHA-1, which has been deprecated since
          * 2011, and will be disallowed by NIST as of 2014. Please refer to the following
          * document for more information:
          *
@@ -201,6 +201,10 @@ $config = array(
         // which additional data permissions to request from user
         // see http://developers.facebook.com/docs/authentication/permissions/ for the full list
         // 'req_perms' => 'email,user_birthday',
+        // Which additional user profile fields to request.
+        // When empty, only the app-specific user id and name will be returned
+        // See https://developers.facebook.com/docs/graph-api/reference/v2.6/user for the full list
+        // 'user_fields' => 'email,birthday,third_party_id,name,first_name,last_name',
     ),
     */
 
@@ -208,10 +212,13 @@ $config = array(
     // LinkedIn OAuth Authentication API.
     // Register your application to get an API key here:
     //  https://www.linkedin.com/secure/developer
+    // Attributes definition:
+    //  https://developer.linkedin.com/docs/fields
     'linkedin' => array(
         'authlinkedin:LinkedIn',
         'key' => 'xxxxxxxxxxxxxxxx',
         'secret' => 'xxxxxxxxxxxxxxxx',
+        'attributes' => 'id,first-name,last-name,headline,summary,specialties,picture-url,email-address',
     ),
     */
 
@@ -242,9 +249,9 @@ $config = array(
     */
 
     /*
-    // Windows Live ID Authentication API.
+    // Microsoft Account (Windows Live ID) Authentication API.
     // Register your application to get an API key here:
-    //  https://manage.dev.live.com
+    //  https://apps.dev.microsoft.com/
     'windowslive' => array(
         'authwindowslive:LiveID',
         'key' => 'xxxxxxxxxxxxxxxx',
@@ -276,6 +283,10 @@ $config = array(
         // The default is 0, which means no timeout.
         'timeout' => 0,
 
+        // The port used when accessing the LDAP server.
+        // The default is 389.
+        'port' => 389,
+
         // Set whether to follow referrals. AD Controllers may require FALSE to function.
         'referrals' => TRUE,
 
@@ -305,7 +316,10 @@ $config = array(
         // the array may match the value the username.
         'search.attributes' => array('uid', 'mail'),
 
-        // The username & password the simpleSAMLphp should bind to before searching. If
+        // Additional LDAP filters appended to the search attributes
+        'search.filter' => '(objectclass=inetorgperson)',
+
+        // The username & password the SimpleSAMLphp should bind to before searching. If
         // this is left as NULL, no bind will be performed before searching.
         'search.username' => NULL,
         'search.password' => NULL,
@@ -316,7 +330,7 @@ $config = array(
         // to get them. This is enabled with this option.
         'priv.read' => FALSE,
 
-        // The DN & password the simpleSAMLphp should bind to before
+        // The DN & password the SimpleSAMLphp should bind to before
         // retrieving attributes. These options are required if
         // 'priv.read' is set to TRUE.
         'priv.username' => NULL,
